@@ -2,10 +2,10 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Customer Visit Map (Toggle Satellite/Street)</title>
+  <title>Customer Visit Map (गांव नाम सहित)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- Leaflet CSS -->
+  <!-- Leaflet CSS + JS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
@@ -21,46 +21,17 @@
   <div id="map"></div>
 
   <script>
-    const map = L.map('map').setView([23.5937, 80.9629], 5);
+    // Initialize map centered on India
+    const map = L.map('map').setView([26.85, 80.95], 7); // आप अपने राज्य अनुसार सेट कर सकते हैं
 
-    const mapTilerKey = 'ULnBJoZJgjsLtADu9Z24';
-
-    // 🌍 OpenStreetMap (गांव और सड़कें दिखाता है)
-    const streetMap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    // 🗺️ OpenStreetMap Standard Tile (गांव नाम सहित)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap contributors',
-      maxZoom: 19
-    });
+      maxZoom: 19,
+      minZoom: 5
+    }).addTo(map);
 
-    // 🛰️ MapTiler Satellite Hybrid
-    const satelliteMap = L.tileLayer(`https://api.maptiler.com/maps/hybrid/{z}/{x}/{y}.jpg?key=${mapTilerKey}`, {
-      tileSize: 512,
-      zoomOffset: -1,
-      attribution: '© MapTiler © OpenStreetMap contributors',
-      maxZoom: 20
-    });
-
-    // Default map: Satellite
-    satelliteMap.addTo(map);
-
-    // 🔄 Toggle control
-    const baseMaps = {
-      "🛰️ Satellite View": satelliteMap,
-      "🗺️ Street Map (गांवों सहित)": streetMap
-    };
-
-    L.control.layers(baseMaps).addTo(map);
-
-    // 🔴 Red marker (pending)
-    const redIcon = new L.Icon({
-      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
-      shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-      iconSize: [25, 41],
-      iconAnchor: [12, 41],
-      popupAnchor: [1, -34],
-      shadowSize: [41, 41]
-    });
-
-    // ✅ Green marker (done)
+    // ✅ Green marker
     const greenIcon = new L.Icon({
       iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png',
       shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
@@ -70,15 +41,25 @@
       shadowSize: [41, 41]
     });
 
-    // 📍 Add marker function
+    // 🔴 Red marker
+    const redIcon = new L.Icon({
+      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
+      shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+      iconSize: [25, 41],
+      iconAnchor: [12, 41],
+      popupAnchor: [1, -34],
+      shadowSize: [41, 41]
+    });
+
+    // 📍 Marker function
     function addMarker(lat, lng, label, status) {
-      let iconToUse = status === 'done' ? greenIcon : redIcon;
-      L.marker([lat, lng], { icon: iconToUse }).addTo(map).bindPopup(label);
+      const icon = status === 'done' ? greenIcon : redIcon;
+      L.marker([lat, lng], { icon: icon }).addTo(map).bindPopup(label);
     }
 
-    // 🧪 Optional test markers
-    // addMarker(26.8467, 80.9462, 'लखनऊ ग्राहक (Pending)', 'pending');
-    // addMarker(28.6139, 77.2090, 'दिल्ली ग्राहक (Done)', 'done');
+    // ✳️ Optional test marker (delete in real use)
+    // addMarker(26.7764, 80.8828, 'गांव: भटपुरा, Visit Pending', 'pending');
+    // addMarker(27.2567, 80.8412, 'गांव: दलेलनगर, Visit Done', 'done');
   </script>
 </body>
 </html>
