@@ -21,32 +21,19 @@
   <div id="map"></div>
 
   <script>
-    // 🌍 Map Initialization
+    // 🌍 Initialize the map
     const map = L.map('map').setView([23.5937, 80.9629], 5);
 
-    // 🌌 Satellite Base Layer (Esri)
-    const satellite = L.tileLayer(
-      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-      {
-        attribution: '© Esri',
-        maxZoom: 18
-      }
-    );
+    // 🛰️ MapTiler Hybrid Satellite with Labels
+    const mapTilerKey = 'ULnBJoZJgjsLtADu9Z24';
+    L.tileLayer(`https://api.maptiler.com/maps/hybrid/{z}/{x}/{y}.jpg?key=${mapTilerKey}`, {
+      tileSize: 512,
+      zoomOffset: -1,
+      attribution: '© MapTiler © OpenStreetMap contributors',
+      maxZoom: 20
+    }).addTo(map);
 
-    // 🏷️ Labels Overlay Layer (places, roads, etc.)
-    const labels = L.tileLayer(
-      'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
-      {
-        attribution: '',
-        maxZoom: 18
-      }
-    );
-
-    // Add both layers to map
-    satellite.addTo(map);
-    labels.addTo(map);
-
-    // 🔴 Red Icon (pending)
+    // 🔴 Red Marker (Pending)
     const redIcon = new L.Icon({
       iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
       shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
@@ -56,7 +43,7 @@
       shadowSize: [41, 41]
     });
 
-    // ✅ Green Icon (done)
+    // ✅ Green Marker (Done)
     const greenIcon = new L.Icon({
       iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png',
       shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
@@ -66,15 +53,15 @@
       shadowSize: [41, 41]
     });
 
-    // 📍 Add marker dynamically
+    // 📍 Function to add marker
     function addMarker(lat, lng, label, status) {
       let iconToUse = status === 'done' ? greenIcon : redIcon;
       L.marker([lat, lng], { icon: iconToUse }).addTo(map).bindPopup(label);
     }
 
-    // 🧪 Optional Test Markers (remove in real app)
-    // addMarker(26.8467, 80.9462, 'लखनऊ (Pending)', 'pending');
-    // addMarker(28.6139, 77.2090, 'दिल्ली (Done)', 'done');
+    // 🧪 Optional test markers (comment in production)
+    // addMarker(26.8467, 80.9462, 'लखनऊ ग्राहक (Pending)', 'pending');
+    // addMarker(28.6139, 77.2090, 'दिल्ली ग्राहक (Done)', 'done');
   </script>
 </body>
 </html>
