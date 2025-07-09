@@ -2,10 +2,10 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Customer Visit Map</title>
+  <title>Customer Visit Map (Satellite + Labels)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- Leaflet CSS & JS -->
+  <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
@@ -21,16 +21,32 @@
   <div id="map"></div>
 
   <script>
-    // 🗺️ Initialize map at center of India
+    // 🌍 Map Initialization
     const map = L.map('map').setView([23.5937, 80.9629], 5);
 
-    // 🌌 Satellite Tiles from Esri (no API key required)
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-      attribution: '© Esri & contributors',
-      maxZoom: 18
-    }).addTo(map);
+    // 🌌 Satellite Base Layer (Esri)
+    const satellite = L.tileLayer(
+      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      {
+        attribution: '© Esri',
+        maxZoom: 18
+      }
+    );
 
-    // 🔴 Red marker icon (pending)
+    // 🏷️ Labels Overlay Layer (places, roads, etc.)
+    const labels = L.tileLayer(
+      'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
+      {
+        attribution: '',
+        maxZoom: 18
+      }
+    );
+
+    // Add both layers to map
+    satellite.addTo(map);
+    labels.addTo(map);
+
+    // 🔴 Red Icon (pending)
     const redIcon = new L.Icon({
       iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
       shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
@@ -40,7 +56,7 @@
       shadowSize: [41, 41]
     });
 
-    // ✅ Green marker icon (done)
+    // ✅ Green Icon (done)
     const greenIcon = new L.Icon({
       iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png',
       shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
@@ -50,13 +66,13 @@
       shadowSize: [41, 41]
     });
 
-    // 📍 Add marker from JavaScript (Sketchware)
+    // 📍 Add marker dynamically
     function addMarker(lat, lng, label, status) {
       let iconToUse = status === 'done' ? greenIcon : redIcon;
       L.marker([lat, lng], { icon: iconToUse }).addTo(map).bindPopup(label);
     }
 
-    // Optional test markers (delete below for production)
+    // 🧪 Optional Test Markers (remove in real app)
     // addMarker(26.8467, 80.9462, 'लखनऊ (Pending)', 'pending');
     // addMarker(28.6139, 77.2090, 'दिल्ली (Done)', 'done');
   </script>
