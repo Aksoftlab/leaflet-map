@@ -2,10 +2,10 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Customer Visit Map (गांव नाम सहित)</title>
+  <title>Customer Visit Map</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- Leaflet CSS + JS -->
+  <!-- Leaflet CSS & JS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
@@ -21,17 +21,31 @@
   <div id="map"></div>
 
   <script>
-    // Initialize map centered on India
-    const map = L.map('map').setView([26.85, 80.95], 7); // आप अपने राज्य अनुसार सेट कर सकते हैं
+    // Initialize map
+    const map = L.map('map').setView([26.85, 80.95], 7);
 
-    // 🗺️ OpenStreetMap Standard Tile (गांव नाम सहित)
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    // Base layers
+    const street = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap contributors',
-      maxZoom: 19,
-      minZoom: 5
-    }).addTo(map);
+      maxZoom: 19
+    });
 
-    // ✅ Green marker
+    const satellite = L.tileLayer('https://api.maptiler.com/maps/hybrid/{z}/{x}/{y}.jpg?key=ULnBJoZJgjsLtADu9Z24', {
+      attribution: '© MapTiler',
+      tileSize: 512,
+      zoomOffset: -1,
+      maxZoom: 20
+    });
+
+    const baseMaps = {
+      "🛣 Street": street,
+      "🛰 Satellite": satellite
+    };
+
+    L.control.layers(baseMaps).addTo(map);
+    street.addTo(map); // Default layer
+
+    // Custom Icons
     const greenIcon = new L.Icon({
       iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png',
       shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
@@ -41,7 +55,6 @@
       shadowSize: [41, 41]
     });
 
-    // 🔴 Red marker
     const redIcon = new L.Icon({
       iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
       shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
@@ -51,15 +64,27 @@
       shadowSize: [41, 41]
     });
 
-    // 📍 Marker function
+    // Marker Function
     function addMarker(lat, lng, label, status) {
       const icon = status === 'done' ? greenIcon : redIcon;
       L.marker([lat, lng], { icon: icon }).addTo(map).bindPopup(label);
     }
 
-    // ✳️ Optional test marker (delete in real use)
-    // addMarker(26.7764, 80.8828, 'गांव: भटपुरा, Visit Pending', 'pending');
-    // addMarker(27.2567, 80.8412, 'गांव: दलेलनगर, Visit Done', 'done');
+    // Click to get Lat/Lng and send to Android
+    map.on('click', function(e) {
+      const lat = e.latlng.lat.toFixed(6);
+      const lng = e.latlng.lng.toFixed(6);
+
+      L.popup()
+        .setLatLng(e.latlng)
+        .setContent("📍 चुना गया स्थान:<br>Lat: " + lat + "<br>Lng: " + lng)
+        .openOn(map);
+
+      // Android → JS interface
+      if (window.AndroidInterface) {
+        window.AndroidInterface.setLatLng(lat, lng);
+      }
+    });
   </script>
 </body>
 </html>
