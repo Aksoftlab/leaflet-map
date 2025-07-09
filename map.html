@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Customer Visit Map (Satellite + Labels)</title>
+  <title>Customer Visit Map (Toggle Satellite/Street)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <!-- Leaflet CSS -->
@@ -21,19 +21,36 @@
   <div id="map"></div>
 
   <script>
-    // 🌍 Initialize the map
     const map = L.map('map').setView([23.5937, 80.9629], 5);
 
-    // 🛰️ MapTiler Hybrid Satellite with Labels
     const mapTilerKey = 'ULnBJoZJgjsLtADu9Z24';
-    L.tileLayer(`https://api.maptiler.com/maps/hybrid/{z}/{x}/{y}.jpg?key=${mapTilerKey}`, {
+
+    // 🌍 OpenStreetMap (गांव और सड़कें दिखाता है)
+    const streetMap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors',
+      maxZoom: 19
+    });
+
+    // 🛰️ MapTiler Satellite Hybrid
+    const satelliteMap = L.tileLayer(`https://api.maptiler.com/maps/hybrid/{z}/{x}/{y}.jpg?key=${mapTilerKey}`, {
       tileSize: 512,
       zoomOffset: -1,
       attribution: '© MapTiler © OpenStreetMap contributors',
       maxZoom: 20
-    }).addTo(map);
+    });
 
-    // 🔴 Red Marker (Pending)
+    // Default map: Satellite
+    satelliteMap.addTo(map);
+
+    // 🔄 Toggle control
+    const baseMaps = {
+      "🛰️ Satellite View": satelliteMap,
+      "🗺️ Street Map (गांवों सहित)": streetMap
+    };
+
+    L.control.layers(baseMaps).addTo(map);
+
+    // 🔴 Red marker (pending)
     const redIcon = new L.Icon({
       iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
       shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
@@ -43,7 +60,7 @@
       shadowSize: [41, 41]
     });
 
-    // ✅ Green Marker (Done)
+    // ✅ Green marker (done)
     const greenIcon = new L.Icon({
       iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png',
       shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
@@ -53,13 +70,13 @@
       shadowSize: [41, 41]
     });
 
-    // 📍 Function to add marker
+    // 📍 Add marker function
     function addMarker(lat, lng, label, status) {
       let iconToUse = status === 'done' ? greenIcon : redIcon;
       L.marker([lat, lng], { icon: iconToUse }).addTo(map).bindPopup(label);
     }
 
-    // 🧪 Optional test markers (comment in production)
+    // 🧪 Optional test markers
     // addMarker(26.8467, 80.9462, 'लखनऊ ग्राहक (Pending)', 'pending');
     // addMarker(28.6139, 77.2090, 'दिल्ली ग्राहक (Done)', 'done');
   </script>
