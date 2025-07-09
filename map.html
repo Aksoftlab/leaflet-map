@@ -2,17 +2,12 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Customer Map</title>
+  <title>Customer Visit Map</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  
-  <!-- Leaflet CSS -->
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-  />
-  <script
-    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
-  </script>
+
+  <!-- Leaflet CSS & JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <style>
     html, body, #map {
@@ -26,16 +21,16 @@
   <div id="map"></div>
 
   <script>
-    // 🗺️ Initialize Map
-    const map = L.map('map').setView([26.8467, 80.9462], 6);
-    
-    // 🧱 Add Tile Layer
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors',
+    // 🗺️ Initialize map at center of India
+    const map = L.map('map').setView([23.5937, 80.9629], 5);
+
+    // 🌌 Satellite Tiles from Esri (no API key required)
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      attribution: '© Esri & contributors',
       maxZoom: 18
     }).addTo(map);
 
-    // 🔴 Red Icon (Pending)
+    // 🔴 Red marker icon (pending)
     const redIcon = new L.Icon({
       iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
       shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
@@ -45,7 +40,7 @@
       shadowSize: [41, 41]
     });
 
-    // ✅ Green Icon (Done)
+    // ✅ Green marker icon (done)
     const greenIcon = new L.Icon({
       iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png',
       shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
@@ -55,15 +50,15 @@
       shadowSize: [41, 41]
     });
 
-    // 📍 Add Marker Function
+    // 📍 Add marker from JavaScript (Sketchware)
     function addMarker(lat, lng, label, status) {
       let iconToUse = status === 'done' ? greenIcon : redIcon;
       L.marker([lat, lng], { icon: iconToUse }).addTo(map).bindPopup(label);
     }
 
-    // 🔹 Test Marker (Optional, remove if injecting from Sketchware)
-    // addMarker(28.6139, 77.2090, "दिल्ली", "pending");
-    // addMarker(19.0760, 72.8777, "मुंबई", "done");
+    // Optional test markers (delete below for production)
+    // addMarker(26.8467, 80.9462, 'लखनऊ (Pending)', 'pending');
+    // addMarker(28.6139, 77.2090, 'दिल्ली (Done)', 'done');
   </script>
 </body>
 </html>
