@@ -5,6 +5,7 @@
   <title>Customer Visit Map</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+  <!-- Leaflet CSS & JS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
@@ -15,29 +16,34 @@
       padding: 0;
     }
 
+    /* 📍 Floating Circle Button */
     #locateButton {
       position: absolute;
-      top: 10px;
-      right: 10px;
+      bottom: 20px;
+      right: 20px;
       z-index: 1000;
+      width: 48px;
+      height: 48px;
       background-color: white;
       border: 2px solid #555;
-      padding: 6px 10px;
-      border-radius: 6px;
+      border-radius: 50%;
+      text-align: center;
+      line-height: 44px;
+      font-size: 20px;
+      font-weight: bold;
       cursor: pointer;
-      font-size: 14px;
-      box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+      box-shadow: 2px 2px 8px rgba(0,0,0,0.3);
     }
 
     #locateButton:hover {
-      background-color: #f0f0f0;
+      background-color: #eee;
     }
   </style>
 </head>
 <body>
 
-  <!-- 📍 Button -->
-  <div id="locateButton">📍 मेरी लोकेशन</div>
+  <!-- 📍 Floating Button -->
+  <div id="locateButton" title="मेरी लोकेशन">📍</div>
 
   <div id="map"></div>
 
@@ -48,6 +54,7 @@
     function initMap() {
       map = L.map('map').setView([26.85, 80.95], 7);
 
+      // Base layers
       const street = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors',
         maxZoom: 19
@@ -66,8 +73,9 @@
       };
 
       L.control.layers(baseMaps).addTo(map);
-      street.addTo(map); // Default
+      street.addTo(map); // default view
 
+      // Marker Icons
       const greenIcon = new L.Icon({
         iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png',
         shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
@@ -86,14 +94,17 @@
         shadowSize: [41, 41]
       });
 
+      // Add marker with status
       function addMarker(lat, lng, label, status) {
         const icon = status === 'done' ? greenIcon : redIcon;
         L.marker([lat, lng], { icon: icon }).addTo(map).bindPopup(label);
       }
 
+      // Map click → popup + send to Android
       map.on('click', function(e) {
         const lat = e.latlng.lat.toFixed(6);
         const lng = e.latlng.lng.toFixed(6);
+
         L.popup()
           .setLatLng(e.latlng)
           .setContent("📍 चुना गया स्थान:<br>Lat: " + lat + "<br>Lng: " + lng)
@@ -104,7 +115,7 @@
         }
       });
 
-      // Live location get function
+      // User location function
       function showUserLocation() {
         if (navigator.geolocation) {
           navigator.geolocation.getCurrentPosition(function(position) {
@@ -112,12 +123,9 @@
             const lng = position.coords.longitude;
             const accuracy = position.coords.accuracy;
 
-            map.setView([lat, lng], 15);
-
-            if (userMarker) {
-              map.removeLayer(userMarker);
-              map.removeLayer(userCircle);
-            }
+            // Remove old
+            if (userMarker) map.removeLayer(userMarker);
+            if (userCircle) map.removeLayer(userCircle);
 
             userMarker = L.marker([lat, lng]).addTo(map).bindPopup("📍 मेरी लोकेशन").openPopup();
             userCircle = L.circle([lat, lng], {
@@ -127,18 +135,19 @@
               fillOpacity: 0.2
             }).addTo(map);
 
+            map.setView([lat, lng], 15);
           }, function(error) {
-            alert("लोकेशन नहीं मिली: " + error.message);
+            alert("लोकेशन नहीं मिल पाई: " + error.message);
           });
         } else {
           alert("आपका ब्राउज़र लोकेशन सपोर्ट नहीं करता");
         }
       }
 
-      // जब पेज लोड हो तभी लोकेशन दिखा दो
+      // Load on start
       showUserLocation();
 
-      // 📍 Button क्लिक
+      // 📍 Button click event
       document.getElementById("locateButton").addEventListener("click", showUserLocation);
     }
 
