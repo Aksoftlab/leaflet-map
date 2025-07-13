@@ -40,7 +40,7 @@
 <body>
 
   <div id="map"></div>
-  <div id="locateButton" title="My Location">☢️</div>
+  <div id="locateButton" title="My Location">🔘</div>
 
   <script>
     let map = L.map('map').setView([26.85, 80.95], 7);
@@ -100,7 +100,7 @@
           if (userMarker) map.removeLayer(userMarker);
           if (userCircle) map.removeLayer(userCircle);
 
-          userMarker = L.marker([lat, lng]).addTo(map).bindPopup("☢️ My Location").openPopup();
+          userMarker = L.marker([lat, lng]).addTo(map).bindPopup("🔘 My Location").openPopup();
           userCircle = L.circle([lat, lng], {
             radius: accuracy, color: 'blue', fillColor: '#30f', fillOpacity: 0.2
           }).addTo(map);
@@ -123,7 +123,7 @@
 
       L.popup()
         .setLatLng(e.latlng)
-        .setContent(`🎯 Pinned Location:<br>Lat: ${lat}<br>Lng: ${lng}`)
+        .setContent(`📌 Pinned Location:<br>Lat: ${lat}<br>Lng: ${lng}`)
         .openOn(map);
 
       if (window.AndroidInterface && window.AndroidInterface.setLatLng) {
