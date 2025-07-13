@@ -21,70 +21,99 @@
   <div id="map"></div>
 
   <script>
-    // Initialize map
-    const map = L.map('map').setView([26.85, 80.95], 7);
+    let map;
 
-    // Base layers
-    const street = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors',
-      maxZoom: 19
-    });
+    function initMap() {
+      map = L.map('map').setView([26.85, 80.95], 7);
 
-    const satellite = L.tileLayer('https://api.maptiler.com/maps/hybrid/{z}/{x}/{y}.jpg?key=ULnBJoZJgjsLtADu9Z24', {
-      attribution: '© MapTiler',
-      tileSize: 512,
-      zoomOffset: -1,
-      maxZoom: 20
-    });
+      // Base layers
+      const street = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 19
+      });
 
-    const baseMaps = {
-      "🛣 Street": street,
-      "🛰 Satellite": satellite
-    };
+      const satellite = L.tileLayer('https://api.maptiler.com/maps/hybrid/{z}/{x}/{y}.jpg?key=ULnBJoZJgjsLtADu9Z24', {
+        attribution: '© MapTiler',
+        tileSize: 512,
+        zoomOffset: -1,
+        maxZoom: 20
+      });
 
-    L.control.layers(baseMaps).addTo(map);
-    street.addTo(map); // Default layer
+      const baseMaps = {
+        "🛣 Street": street,
+        "🛰 Satellite": satellite
+      };
 
-    // Custom Icons
-    const greenIcon = new L.Icon({
-      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png',
-      shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-      iconSize: [25, 41],
-      iconAnchor: [12, 41],
-      popupAnchor: [1, -34],
-      shadowSize: [41, 41]
-    });
+      L.control.layers(baseMaps).addTo(map);
+      street.addTo(map); // Default layer
 
-    const redIcon = new L.Icon({
-      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
-      shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-      iconSize: [25, 41],
-      iconAnchor: [12, 41],
-      popupAnchor: [1, -34],
-      shadowSize: [41, 41]
-    });
+      // Custom Icons
+      const greenIcon = new L.Icon({
+        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png',
+        shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+      });
 
-    // Marker Function
-    function addMarker(lat, lng, label, status) {
-      const icon = status === 'done' ? greenIcon : redIcon;
-      L.marker([lat, lng], { icon: icon }).addTo(map).bindPopup(label);
+      const redIcon = new L.Icon({
+        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
+        shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+      });
+
+      // Marker Function
+      function addMarker(lat, lng, label, status) {
+        const icon = status === 'done' ? greenIcon : redIcon;
+        L.marker([lat, lng], { icon: icon }).addTo(map).bindPopup(label);
+      }
+
+      // Click to get Lat/Lng and send to Android
+      map.on('click', function(e) {
+        const lat = e.latlng.lat.toFixed(6);
+        const lng = e.latlng.lng.toFixed(6);
+
+        L.popup()
+          .setLatLng(e.latlng)
+          .setContent("📍 चुना गया स्थान:<br>Lat: " + lat + "<br>Lng: " + lng)
+          .openOn(map);
+
+        if (window.AndroidInterface) {
+          window.AndroidInterface.setLatLng(lat, lng);
+        }
+      });
+
+      // Show User Location
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          const accuracy = position.coords.accuracy;
+
+          // Blue circle & marker
+          L.circle([lat, lng], {
+            radius: accuracy,
+            color: 'blue',
+            fillColor: '#30f',
+            fillOpacity: 0.2
+          }).addTo(map);
+
+          L.marker([lat, lng]).addTo(map).bindPopup("📍 मेरी लोकेशन").openPopup();
+
+          map.setView([lat, lng], 15);
+        }, function(error) {
+          console.log("लोकेशन नहीं मिल पाई: " + error.message);
+        });
+      } else {
+        alert("आपका ब्राउज़र लोकेशन सपोर्ट नहीं करता");
+      }
     }
 
-    // Click to get Lat/Lng and send to Android
-    map.on('click', function(e) {
-      const lat = e.latlng.lat.toFixed(6);
-      const lng = e.latlng.lng.toFixed(6);
-
-      L.popup()
-        .setLatLng(e.latlng)
-        .setContent("📍 चुना गया स्थान:<br>Lat: " + lat + "<br>Lng: " + lng)
-        .openOn(map);
-
-      // Android → JS interface
-      if (window.AndroidInterface) {
-        window.AndroidInterface.setLatLng(lat, lng);
-      }
-    });
+    window.onload = initMap;
   </script>
 </body>
 </html>
