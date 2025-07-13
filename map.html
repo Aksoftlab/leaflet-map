@@ -5,7 +5,6 @@
   <title>Customer Visit Map</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- Leaflet CSS & JS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
@@ -15,9 +14,26 @@
       margin: 0;
       padding: 0;
     }
+    #searchBox {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 999;
+      width: 80%;
+    }
+    #searchInput {
+      width: 100%;
+      padding: 8px;
+      font-size: 16px;
+    }
   </style>
 </head>
 <body>
+
+  <div id="searchBox">
+    <input type="text" id="searchInput" placeholder="🔍 गांव या शहर का नाम टाइप करें..." />
+  </div>
   <div id="map"></div>
 
   <script>
@@ -26,11 +42,10 @@
     function initMap() {
       map = L.map('map').setView([26.85, 80.95], 7);
 
-      // Base layers
       const street = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors',
         maxZoom: 19
-      });
+      }).addTo(map);
 
       const satellite = L.tileLayer('https://api.maptiler.com/maps/hybrid/{z}/{x}/{y}.jpg?key=ULnBJoZJgjsLtADu9Z24', {
         attribution: '© MapTiler',
@@ -43,36 +58,27 @@
         "🛣 Street": street,
         "🛰 Satellite": satellite
       };
-
       L.control.layers(baseMaps).addTo(map);
-      street.addTo(map); // Default layer
 
-      // Custom Icons
-      const greenIcon = new L.Icon({
-        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png',
-        shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-        iconSize: [25, 41],
-        iconAnchor: [12, 41],
-        popupAnchor: [1, -34],
-        shadowSize: [41, 41]
-      });
+      // लोकेशन access
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(pos) {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          const accuracy = pos.coords.accuracy;
 
-      const redIcon = new L.Icon({
-        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
-        shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-        iconSize: [25, 41],
-        iconAnchor: [12, 41],
-        popupAnchor: [1, -34],
-        shadowSize: [41, 41]
-      });
-
-      // Marker Function
-      function addMarker(lat, lng, label, status) {
-        const icon = status === 'done' ? greenIcon : redIcon;
-        L.marker([lat, lng], { icon: icon }).addTo(map).bindPopup(label);
+          map.setView([lat, lng], 15);
+          L.marker([lat, lng]).addTo(map).bindPopup("📍 मेरी लोकेशन").openPopup();
+          L.circle([lat, lng], {
+            radius: accuracy,
+            color: 'blue',
+            fillColor: '#30f',
+            fillOpacity: 0.2
+          }).addTo(map);
+        });
       }
 
-      // Click to get Lat/Lng and send to Android
+      // क्लिक पर Lat/Lng popup
       map.on('click', function(e) {
         const lat = e.latlng.lat.toFixed(6);
         const lng = e.latlng.lng.toFixed(6);
@@ -87,33 +93,32 @@
         }
       });
 
-      // Show User Location
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(function(position) {
-          const lat = position.coords.latitude;
-          const lng = position.coords.longitude;
-          const accuracy = position.coords.accuracy;
+      // 🔍 सर्च बॉक्स इवेंट
+      const input = document.getElementById('searchInput');
+      input.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          const query = input.value;
+          fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`)
+            .then(res => res.json())
+            .then(data => {
+              if (data.length > 0) {
+                const place = data[0];
+                const lat = parseFloat(place.lat);
+                const lon = parseFloat(place.lon);
 
-          // Blue circle & marker
-          L.circle([lat, lng], {
-            radius: accuracy,
-            color: 'blue',
-            fillColor: '#30f',
-            fillOpacity: 0.2
-          }).addTo(map);
-
-          L.marker([lat, lng]).addTo(map).bindPopup("📍 मेरी लोकेशन").openPopup();
-
-          map.setView([lat, lng], 15);
-        }, function(error) {
-          console.log("लोकेशन नहीं मिल पाई: " + error.message);
-        });
-      } else {
-        alert("आपका ब्राउज़र लोकेशन सपोर्ट नहीं करता");
-      }
+                map.setView([lat, lon], 15);
+                L.marker([lat, lon]).addTo(map)
+                  .bindPopup("📌 " + place.display_name).openPopup();
+              } else {
+                alert("कोई जगह नहीं मिली");
+              }
+            });
+        }
+      });
     }
 
     window.onload = initMap;
   </script>
+
 </body>
 </html>
