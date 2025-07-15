@@ -56,6 +56,7 @@
   <script>
     let map = L.map('map').setView([26.85, 80.95], 7);
     let userMarker, userCircle;
+    const allMarkers = []; // 🟢 Store all added markers here
 
     // Base Layers
     const street = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -93,10 +94,31 @@
       popupAnchor: [1, -34], shadowSize: [41, 41]
     });
 
-    // Marker add function
+    // Marker add function (called from Android too)
     function addMarker(lat, lng, label, status) {
       const icon = status === 'done' ? greenIcon : redIcon;
-      L.marker([lat, lng], { icon }).addTo(map).bindPopup(label);
+      const marker = L.marker([lat, lng], { icon }).addTo(map).bindPopup(label);
+      marker._customLat = lat;
+      marker._customLng = lng;
+      allMarkers.push(marker);
+    }
+
+    // 🧹 Remove single marker by lat/lng
+    function removeMarker(lat, lng) {
+      for (let i = allMarkers.length - 1; i >= 0; i--) {
+        const m = allMarkers[i];
+        if (Number(m._customLat) === Number(lat) && Number(m._customLng) === Number(lng)) {
+          map.removeLayer(m);
+          allMarkers.splice(i, 1);
+          break;
+        }
+      }
+    }
+
+    // 🧹 Remove all markers
+    function removeAllMarkers() {
+      allMarkers.forEach(m => map.removeLayer(m));
+      allMarkers.length = 0;
     }
 
     // Show user location
