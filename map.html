@@ -155,7 +155,7 @@
 
       L.popup()
         .setLatLng(e.latlng)
-        .setContent(`📌 चुना गया स्थान:<br>Lat: ${lat}<br>Lng: ${lng}`)
+        .setContent(`📌 Pinned Location:<br>Lat: ${lat}<br>Lng: ${lng}`)
         .openOn(map);
 
       if (window.AndroidInterface && window.AndroidInterface.setLatLng) {
