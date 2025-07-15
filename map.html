@@ -97,7 +97,7 @@
     // Marker add function (called from Android too)
     function addMarker(lat, lng, label, status) {
       const icon = status === 'done' ? greenIcon : redIcon;
-      const marker = L.marker([lat, lng], { icon }).addTo(map).bindPopup(label);
+      const marker = L.marker([lat, lng], { icon }).addTo(map).bindPopup(`<b>${label}</b>`);
       marker._customLat = lat;
       marker._customLng = lng;
       allMarkers.push(marker);
