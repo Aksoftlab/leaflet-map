@@ -21,38 +21,48 @@
       bottom: 20px;
       right: 20px;
       z-index: 9999;
-      width: 32px;
-      height: 32px;
-      background: white;
-      border: 1px solid #333;
+      width: 48px;
+      height: 48px;
+      background-color: white;
+      border: 2px solid #555;
       border-radius: 50%;
       box-shadow: 1px 1px 6px rgba(0,0,0,0.4);
-      font-size: 10px;
-      text-align: center;
-      line-height: 44px;
+      padding: 6px;
       cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
+
     #locateButton:hover {
       background-color: #eee;
+    }
+
+    #locateButton img {
+      width: 24px;
+      height: 24px;
     }
   </style>
 </head>
 <body>
 
   <div id="map"></div>
-  <div id="locateButton" title="My Location">⚫</div>
+
+  <!-- 📍 Floating Button -->
+  <div id="locateButton" title="मेरी लोकेशन">
+    <img src="https://cdn-icons-png.flaticon.com/512/1161/1161225.png" alt="📍">
+  </div>
 
   <script>
     let map = L.map('map').setView([26.85, 80.95], 7);
     let userMarker, userCircle;
 
-    // Street Layer
+    // Base Layers
     const street = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap contributors',
       maxZoom: 19
     });
 
-    // Satellite Layer
     const satellite = L.tileLayer('https://api.maptiler.com/maps/hybrid/{z}/{x}/{y}.jpg?key=ULnBJoZJgjsLtADu9Z24', {
       attribution: '© MapTiler',
       tileSize: 512,
@@ -62,11 +72,11 @@
 
     const baseLayers = {
       "🛣 Street View": street,
-      "🛰 Satelite View": satellite
+      "🛰 Satellite View": satellite
     };
 
     L.control.layers(baseLayers).addTo(map);
-    street.addTo(map); // Default
+    street.addTo(map); // default
 
     // Marker icons
     const greenIcon = new L.Icon({
@@ -83,13 +93,13 @@
       popupAnchor: [1, -34], shadowSize: [41, 41]
     });
 
-    // Marker adding function (called from Android too)
+    // Marker add function
     function addMarker(lat, lng, label, status) {
       const icon = status === 'done' ? greenIcon : redIcon;
       L.marker([lat, lng], { icon }).addTo(map).bindPopup(label);
     }
 
-    // Show live location on load
+    // Show user location
     function showUserLocation() {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition((pos) => {
@@ -112,18 +122,18 @@
       }
     }
 
-    // 📍 Floating Button → live location
+    // 📍 Button event
     document.getElementById("locateButton").addEventListener("click", showUserLocation);
-    showUserLocation(); // onLoad
+    showUserLocation(); // On load
 
-    // Tap on map → send to Android + popup
+    // Map click → popup + Android callback
     map.on('click', function(e) {
       const lat = e.latlng.lat.toFixed(6);
       const lng = e.latlng.lng.toFixed(6);
 
       L.popup()
         .setLatLng(e.latlng)
-        .setContent(`📌 Pinned Location:<br>Lat: ${lat}<br>Lng: ${lng}`)
+        .setContent(`📌 चुना गया स्थान:<br>Lat: ${lat}<br>Lng: ${lng}`)
         .openOn(map);
 
       if (window.AndroidInterface && window.AndroidInterface.setLatLng) {
