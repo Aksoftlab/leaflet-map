@@ -2,130 +2,94 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Custom Map</title>
+  <title>Offline Field Map</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="leaflet.css" />
   <style>
     html, body, #map { height: 100%; margin: 0; padding: 0; }
-    .leaflet-control-layers {
-      background-color: white;
-      padding: 5px;
-    }
-    #myLocationBtn {
+    .recenter-button {
       position: absolute;
-      bottom: 10px;
-      left: 10px;
+      top: 10px;
+      right: 10px;
       z-index: 1000;
-      background-color: white;
-      border: 2px solid gray;
-      border-radius: 8px;
-      padding: 6px;
+      background: white;
+      padding: 5px 10px;
+      border-radius: 4px;
       cursor: pointer;
-      box-shadow: 0 0 6px rgba(0,0,0,0.3);
-    }
-    #myLocationBtn img {
-      width: 24px;
-      height: 24px;
+      box-shadow: 0 1px 5px rgba(0,0,0,0.65);
     }
   </style>
 </head>
 <body>
+  <div id="map"></div>
+  <div class="recenter-button" onclick="recenterMap()">🎯 केंद्रित करें</div>
 
-<div id="map"></div>
-<div id="myLocationBtn" title="My Location">
-  <img src="my_location_icon.png" />
-</div>
+  <script src="leaflet.js"></script>
+  <script>
+    const map = L.map('map', {
+      zoomControl: true
+    }).setView([28.0, 78.0], 13);
 
-<script src="leaflet.js"></script>
-<script>
-  var map = L.map('map').setView([28.0, 78.0], 13);
-  var shouldAutoCenter = false;
+    const tiles = L.tileLayer('./tiles/{z}/{x}/{y}.png', {
+      minZoom: 10,
+      maxZoom: 18,
+      attribution: 'Local Tiles'
+    }).addTo(map);
 
-  var osmLayer = L.tileLayer('tiles/osm/{z}/{x}/{y}.png', {
-    attribution: 'OSM',
-    maxZoom: 19
-  }).addTo(map);
+    const customerData = [
+      { lat: 28.001, lon: 78.001, name: 'Customer A', status: 'done' },
+      { lat: 28.002, lon: 78.002, name: 'Customer B', status: 'pending' },
+    ];
 
-  var satelliteLayer = L.tileLayer('tiles/satellite/{z}/{x}/{y}.jpg', {
-    attribution: 'Satellite',
-    maxZoom: 19
-  });
+    customerData.forEach(cust => {
+      const iconUrl = cust.status === 'done' ? 'green-marker.png' : 'red-marker.png';
+      const icon = L.icon({
+        iconUrl: iconUrl,
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+      });
 
-  var baseMaps = {
-    "सड़क नक्शा": osmLayer,
-    "सैटेलाइट दृश्य": satelliteLayer
-  };
-
-  L.control.layers(baseMaps).addTo(map);
-
-  // पिन जोड़ने के लिए एंड्रॉइड से कॉल की जाने वाली फ़ंक्शन
-  var markers = [];
-
-  function addMarker(lat, lng, label, status) {
-    var icon = L.icon({
-      iconUrl: 'https://cdn-icons-png.flaticon.com/512/1161/1161225.png',
-      iconSize: [32, 32],
-      iconAnchor: [16, 32],
-      popupAnchor: [0, -32]
+      L.marker([cust.lat, cust.lon], { icon }).addTo(map)
+        .bindPopup(cust.name);
     });
 
-    var marker = L.marker([lat, lng], { icon: icon })
-      .bindPopup("<b>" + label + "</b><br>Status: " + status)
-      .addTo(map);
+    let userMarker = null;
+    let shouldRecenter = true;
 
-    markers.push({ lat: lat, lng: lng, marker: marker });
-  }
-
-  function removeMarkerByLatLng(lat, lng) {
-    for (var i = 0; i < markers.length; i++) {
-      var m = markers[i];
-      if (m.lat == lat && m.lng == lng) {
-        map.removeLayer(m.marker);
-        markers.splice(i, 1);
-        break;
+    function updateUserLocation(lat, lon) {
+      if (!userMarker) {
+        userMarker = L.marker([lat, lon], { color: 'blue' }).addTo(map);
+        if (shouldRecenter) {
+          map.setView([lat, lon], 15);
+          shouldRecenter = false;
+        }
+      } else {
+        userMarker.setLatLng([lat, lon]);
       }
     }
-  }
 
-  // 📍 यूज़र लोकेशन
-  var myLocationMarker = null;
-
-  function updateLocation(lat, lng) {
-    if (myLocationMarker == null) {
-      myLocationMarker = L.marker([lat, lng], {
-        icon: L.icon({
-          iconUrl: 'my_location_icon.png',
-          iconSize: [24, 24],
-          iconAnchor: [12, 12]
-        })
-      }).addTo(map);
-    } else {
-      myLocationMarker.setLatLng([lat, lng]);
+    function recenterMap() {
+      if (userMarker) {
+        map.setView(userMarker.getLatLng(), 15);
+      }
     }
 
-    if (shouldAutoCenter) {
-      map.setView([lat, lng], 16);
-      shouldAutoCenter = false;
+    // JS इंटरफेस से Android WebView को कॉलबैक
+    function locationupdate(lat, lon) {
+      updateUserLocation(lat, lon);
     }
-  }
 
-  document.getElementById("myLocationBtn").onclick = function() {
-    shouldAutoCenter = true;
-    if (myLocationMarker) {
-      map.setView(myLocationMarker.getLatLng(), 16);
-    }
-  };
+    map.on('click', function(e) {
+      const lat = e.latlng.lat.toFixed(6);
+      const lon = e.latlng.lng.toFixed(6);
+      if (window.AndroidInterface && AndroidInterface.fillCoordinates) {
+        AndroidInterface.fillCoordinates(lat, lon);
+      } else {
+        alert(`Lat: ${lat}, Lon: ${lon}`);
+      }
+    });
 
-  // किसी भी प्वाइंट पर क्लिक करें
-  map.on('click', function(e) {
-    var lat = e.latlng.lat.toFixed(6);
-    var lng = e.latlng.lng.toFixed(6);
-    L.popup().setLatLng(e.latlng).setContent("Lat: " + lat + "<br>Lng: " + lng).openOn(map);
-    if (window.AndroidInterface && AndroidInterface.setLatLng) {
-      AndroidInterface.setLatLng(lat, lng);
-    }
-  });
-
-</script>
+  </script>
 </body>
 </html>
