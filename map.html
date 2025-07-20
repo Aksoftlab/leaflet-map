@@ -2,182 +2,130 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Customer Visit Map</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <title>Custom Map</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="leaflet.css" />
   <style>
-    html, body, #map {
-      height: 100%;
-      margin: 0;
-      padding: 0;
-    }
-
-    #locateButton {
-      position: absolute;
-      bottom: 20px;
-      right: 20px;
-      z-index: 9999;
-      width: 28px;
-      height: 28px;
+    html, body, #map { height: 100%; margin: 0; padding: 0; }
+    .leaflet-control-layers {
       background-color: white;
-      border: 2px solid #555;
-      border-radius: 50%;
-      box-shadow: 0px 1px 3px rgba(0,0,0,0.3);
-      padding: 2px;
+      padding: 5px;
+    }
+    #myLocationBtn {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      z-index: 1000;
+      background-color: white;
+      border: 2px solid gray;
+      border-radius: 8px;
+      padding: 6px;
       cursor: pointer;
-      display: flex;
-      justify-content: center;
-      align-items: center;
+      box-shadow: 0 0 6px rgba(0,0,0,0.3);
     }
-
-    #locateButton:hover {
-      background-color: #eee;
-    }
-
-    #locateButton img {
-      width: 16px;
-      height: 16px;
+    #myLocationBtn img {
+      width: 24px;
+      height: 24px;
     }
   </style>
 </head>
 <body>
 
 <div id="map"></div>
-
-<!-- 📍 Floating Button -->
-<div id="locateButton" title="मेरी लोकेशन">
-  <img src="https://cdn-icons-png.flaticon.com/512/1161/1161225.png" alt="📍">
+<div id="myLocationBtn" title="My Location">
+  <img src="my_location_icon.png" />
 </div>
 
+<script src="leaflet.js"></script>
 <script>
-  let map = L.map('map').setView([26.85, 80.95], 7);
-  let userMarker, userCircle;
-  const allMarkers = [];
-  let autoCentering = true;
+  var map = L.map('map').setView([28.0, 78.0], 13);
+  var shouldAutoCenter = false;
 
-  // Base Layers
-  const street = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap contributors',
+  var osmLayer = L.tileLayer('tiles/osm/{z}/{x}/{y}.png', {
+    attribution: 'OSM',
+    maxZoom: 19
+  }).addTo(map);
+
+  var satelliteLayer = L.tileLayer('tiles/satellite/{z}/{x}/{y}.jpg', {
+    attribution: 'Satellite',
     maxZoom: 19
   });
 
-  const satellite = L.tileLayer('https://api.maptiler.com/maps/hybrid/{z}/{x}/{y}.jpg?key=ULnBJoZJgjsLtADu9Z24', {
-    attribution: '© MapTiler',
-    tileSize: 512,
-    zoomOffset: -1,
-    maxZoom: 20
-  });
-
-  const baseLayers = {
-    "🛣 Street View": street,
-    "🛰 Satellite View": satellite
+  var baseMaps = {
+    "सड़क नक्शा": osmLayer,
+    "सैटेलाइट दृश्य": satelliteLayer
   };
 
-  L.control.layers(baseLayers).addTo(map);
-  street.addTo(map);
+  L.control.layers(baseMaps).addTo(map);
 
-  // Marker icons
-  const greenIcon = new L.Icon({
-    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png',
-    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-    iconSize: [25, 41], iconAnchor: [12, 41],
-    popupAnchor: [1, -34], shadowSize: [41, 41]
-  });
-
-  const redIcon = new L.Icon({
-    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
-    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-    iconSize: [25, 41], iconAnchor: [12, 41],
-    popupAnchor: [1, -34], shadowSize: [41, 41]
-  });
+  // पिन जोड़ने के लिए एंड्रॉइड से कॉल की जाने वाली फ़ंक्शन
+  var markers = [];
 
   function addMarker(lat, lng, label, status) {
-    const icon = status === 'done' ? greenIcon : redIcon;
-    const marker = L.marker([lat, lng], { icon }).addTo(map).bindPopup(`<b>${label}</b>`);
-    marker._customLat = lat;
-    marker._customLng = lng;
-    allMarkers.push(marker);
+    var icon = L.icon({
+      iconUrl: 'https://cdn-icons-png.flaticon.com/512/1161/1161225.png',
+      iconSize: [32, 32],
+      iconAnchor: [16, 32],
+      popupAnchor: [0, -32]
+    });
+
+    var marker = L.marker([lat, lng], { icon: icon })
+      .bindPopup("<b>" + label + "</b><br>Status: " + status)
+      .addTo(map);
+
+    markers.push({ lat: lat, lng: lng, marker: marker });
   }
 
-  function removeMarker(lat, lng) {
-    for (let i = allMarkers.length - 1; i >= 0; i--) {
-      const m = allMarkers[i];
-      if (Number(m._customLat) === Number(lat) && Number(m._customLng) === Number(lng)) {
-        map.removeLayer(m);
-        allMarkers.splice(i, 1);
+  function removeMarkerByLatLng(lat, lng) {
+    for (var i = 0; i < markers.length; i++) {
+      var m = markers[i];
+      if (m.lat == lat && m.lng == lng) {
+        map.removeLayer(m.marker);
+        markers.splice(i, 1);
         break;
       }
     }
   }
 
-  function removeAllMarkers() {
-    allMarkers.forEach(m => map.removeLayer(m));
-    allMarkers.length = 0;
-  }
+  // 📍 यूज़र लोकेशन
+  var myLocationMarker = null;
 
-  // लाइव लोकेशन ट्रैकिंग
-  if (navigator.geolocation) {
-    navigator.geolocation.watchPosition((pos) => {
-      const lat = pos.coords.latitude;
-      const lng = pos.coords.longitude;
-      const accuracy = pos.coords.accuracy;
-
-      if (userMarker) {
-        userMarker.setLatLng([lat, lng]);
-      } else {
-        userMarker = L.marker([lat, lng]).addTo(map).bindPopup("📌 मेरी लोकेशन");
-      }
-
-      if (userCircle) {
-        userCircle.setLatLng([lat, lng]);
-        userCircle.setRadius(accuracy);
-      } else {
-        userCircle = L.circle([lat, lng], {
-          radius: accuracy, color: 'blue', fillColor: '#30f', fillOpacity: 0.2
-        }).addTo(map);
-      }
-
-      if (autoCentering) {
-        map.setView([lat, lng]);
-      }
-    }, (err) => {
-      alert("लोकेशन त्रुटि: " + err.message);
-    }, {
-      enableHighAccuracy: true,
-      maximumAge: 0,
-      timeout: 10000
-    });
-
-    map.on('movestart', function () {
-      autoCentering = false;
-    });
-  }
-
-  // 📍 Button event
-  document.getElementById("locateButton").addEventListener("click", () => {
-    if (userMarker && userMarker.getLatLng()) {
-      autoCentering = true;
-      map.setView(userMarker.getLatLng(), 15);
-      userMarker.openPopup();
+  function updateLocation(lat, lng) {
+    if (myLocationMarker == null) {
+      myLocationMarker = L.marker([lat, lng], {
+        icon: L.icon({
+          iconUrl: 'my_location_icon.png',
+          iconSize: [24, 24],
+          iconAnchor: [12, 12]
+        })
+      }).addTo(map);
+    } else {
+      myLocationMarker.setLatLng([lat, lng]);
     }
-  });
 
-  // मैप क्लिक → popup + Android callback
+    if (shouldAutoCenter) {
+      map.setView([lat, lng], 16);
+      shouldAutoCenter = false;
+    }
+  }
+
+  document.getElementById("myLocationBtn").onclick = function() {
+    shouldAutoCenter = true;
+    if (myLocationMarker) {
+      map.setView(myLocationMarker.getLatLng(), 16);
+    }
+  };
+
+  // किसी भी प्वाइंट पर क्लिक करें
   map.on('click', function(e) {
-    const lat = e.latlng.lat.toFixed(6);
-    const lng = e.latlng.lng.toFixed(6);
-
-    L.popup()
-      .setLatLng(e.latlng)
-      .setContent(`📌 चुना गया स्थान:<br>Lat: ${lat}<br>Lng: ${lng}`)
-      .openOn(map);
-
-    if (window.AndroidInterface && window.AndroidInterface.setLatLng) {
-      window.AndroidInterface.setLatLng(lat, lng);
+    var lat = e.latlng.lat.toFixed(6);
+    var lng = e.latlng.lng.toFixed(6);
+    L.popup().setLatLng(e.latlng).setContent("Lat: " + lat + "<br>Lng: " + lng).openOn(map);
+    if (window.AndroidInterface && AndroidInterface.setLatLng) {
+      AndroidInterface.setLatLng(lat, lng);
     }
   });
-</script>
 
+</script>
 </body>
 </html>
