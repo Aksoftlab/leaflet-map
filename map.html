@@ -4,17 +4,11 @@
   <meta charset="utf-8" />
   <title>Customer Visit Map</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <!-- Leaflet CSS & JS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <style>
-    html, body, #map {
-      height: 100%;
-      margin: 0;
-      padding: 0;
-    }
+    html, body, #map { height: 100%; margin: 0; padding: 0; }
 
     #locateButton {
       position: absolute;
@@ -57,6 +51,7 @@
   let map = L.map('map').setView([26.85, 80.95], 7);
   let userMarker, userCircle;
   const allMarkers = [];
+  let autoCenter = true; // 🔁 यह कंट्रोल करेगा ऑटो-सेंटरिंग
 
   const street = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap contributors',
@@ -93,7 +88,6 @@
     popupAnchor: [1, -34], shadowSize: [41, 41]
   });
 
-  // Add Marker Function
   function addMarker(lat, lng, label, status) {
     const icon = status === 'done' ? greenIcon : redIcon;
     const marker = L.marker([lat, lng], { icon }).addTo(map).bindPopup(`<b>${label}</b>`);
@@ -102,7 +96,6 @@
     allMarkers.push(marker);
   }
 
-  // Remove Marker by lat/lng
   function removeMarker(lat, lng) {
     for (let i = allMarkers.length - 1; i >= 0; i--) {
       const m = allMarkers[i];
@@ -114,13 +107,11 @@
     }
   }
 
-  // Remove all markers
   function removeAllMarkers() {
     allMarkers.forEach(m => map.removeLayer(m));
     allMarkers.length = 0;
   }
 
-  // 📍 Show LIVE User Location
   function enableLiveUserLocation() {
     if (navigator.geolocation) {
       navigator.geolocation.watchPosition((pos) => {
@@ -143,7 +134,10 @@
           }).addTo(map);
         }
 
-        map.setView([lat, lng], 15);
+        if (autoCenter) {
+          map.setView([lat, lng], 15);
+        }
+
       }, (err) => {
         alert("लोकेशन त्रुटि: " + err.message);
       }, {
@@ -156,18 +150,22 @@
     }
   }
 
-  // 📍 Button Event
+  // 👉 जैसे ही user pan या zoom करेगा, autoCenter बंद
+  map.on('movestart', () => {
+    autoCenter = false;
+  });
+
+  // 📍 Button → manually recenter और फिर से autoCenter चालू कर सकता है
   document.getElementById("locateButton").addEventListener("click", () => {
     if (userMarker && userMarker.getLatLng()) {
+      autoCenter = true;
       map.setView(userMarker.getLatLng(), 15);
       userMarker.openPopup();
     }
   });
 
-  // 👣 Enable live location immediately
   enableLiveUserLocation();
 
-  // 🗺 Map click → popup + Android
   map.on('click', function (e) {
     const lat = e.latlng.lat.toFixed(6);
     const lng = e.latlng.lng.toFixed(6);
